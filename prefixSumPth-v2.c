@@ -1,6 +1,6 @@
 // TRABALHO2: CI316 1o semestre 2022
-// Aluno:
-// GRR:
+// Aluno: Anderson Aparecido do Carmo Frasão
+// GRR: 20204069
 //
 
 	///////////////////////////////////////
@@ -66,6 +66,54 @@ int min(int a, int b)
 		return b;
 }
 
+void *prefixPartialSum(void *ptr)
+{
+    // myIndex == thread atual
+    int myIndex = *((int *)ptr);
+    int nElements = nTotalElements / nThreads;
+    if (myIndex == nThreads-1)  
+        nElements += nTotalElements % nThreads;
+
+    int first = myIndex * (nTotalElements / nThreads);
+    int last = first + nElements - 1;
+
+    #if DEBUG == 1
+      printf("thread %d here! first=%d last=%d\n\n", myIndex, first, last );
+    #endif
+    
+    if( myIndex != 0 )
+        pthread_barrier_wait(&myBarrier);  
+        
+    // work with my chunck
+    int myPartialSum = 0;
+    for( int i=first; i<=last ; i++ )
+        myPartialSum += InputVector[i];
+    
+    OutputVector[first] = InputVector[first];
+    for( int i=first; i<last ; i++ )
+        OutputVector[i+1] = InputVector[i+1] + OutputVector[i];
+        
+    // store my result 
+    maximosPorThread[ myIndex ] = myPartialSum;   
+    
+    pthread_barrier_wait(&myBarrier);    
+
+    if(myIndex == 0)
+        for(int i = 1; i < nThreads; i++)
+            maximosPorThread[i] += maximosPorThread[i-1]; 
+    
+    pthread_barrier_wait(&myBarrier); 
+
+    if(myIndex != 0){
+        for(int i = first; i <= last; i++)
+            OutputVector[i] += maximosPorThread[myIndex-1];
+    }
+
+    pthread_barrier_wait(&myBarrier); 
+
+    return NULL;
+}
+
 void verifyPrefixSum( const TYPE *InputVec, 
                       const TYPE *OutputVec, 
                       long nTotalElmts )
@@ -97,23 +145,33 @@ void verifyPrefixSum( const TYPE *InputVec,
 
 void ParallelPrefixSumPth( const TYPE *InputVec, 
                            const TYPE *OutputVec, 
-                           long nTotalElmts )
+                           long nTotalElmts,
+						   int nThreads )
 {
-   pthread_t Thread[MAX_THREADS];
-   int my_thread_id[MAX_THREADS];
+   	pthread_t Thread[MAX_THREADS];
+   	int my_thread_id[MAX_THREADS];
    
-   // inicializar a barreira
-   pthread_barrier_init(&myBarrier, NULL, nThreads);
+   	// inicializar a barreira
+   	pthread_barrier_init(&myBarrier, NULL, nThreads);
 
 
-   ///////////////// INCLUIR AQUI SEU CODIGO da V2 /////////
+   	///////////////// INCLUIR AQUI SEU CODIGO da V2 /////////
    
-   // criar as threads aqui!
+   	// criar as threads aqui!
+   	my_thread_id[0] = 0;
+    for (i=1; i < nThreads; i++) {
+      my_thread_id[i] = i;
+      pthread_create( &Thread[i], NULL, 
+                      prefixPartialSum, &my_thread_id[i]);
+    }
    
-   // voce pode criar outras funcoes para as suas threads
+   	// voce pode criar outras funcoes para as suas threads
    
-   // fazer join das threads aqui!
-   //////////////////////////////////////////////////////////
+   	// fazer join das threads aqui!
+   	for (i=0; i < nThreads; i++)
+        pthread_join(Thread[i], NULL);
+
+   	//////////////////////////////////////////////////////////
    
     pthread_barrier_destroy(&myBarrier);
 
@@ -217,7 +275,7 @@ int main(int argc, char *argv[])
 	chrono_reset(&parallelPrefixSumTime);
 	chrono_start(&parallelPrefixSumTime);
 
-            ParallelPrefixSumPth( InputVector, OutputVector, nTotalElements );
+            ParallelPrefixSumPth( InputVector, OutputVector, nTotalElements, nThreads );
 
 	// Measuring time of the parallel algorithm 
 	//    including threads creation and joins...
