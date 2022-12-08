@@ -97,9 +97,14 @@ void *prefixPartialSum(void *ptr)
 		myPrefixSum += partialSum[i];
 	}
 
+	OutputVector[first] = InputVector[first];
+    for( int i=first; i<last ; i++ )
+        OutputVector[i+1] = InputVector[i+1] + OutputVector[i];
 
-    for( int i=first; i<=last ; i++ )
-        OutputVector[i] = InputVector[i] + myPrefixSum;
+	if(myIndex != 0){
+		for( int i=first; i<=last ; i++ )
+			OutputVector[i] += myPrefixSum;
+	}
 
     return NULL;
 }
@@ -254,8 +259,8 @@ int main(int argc, char *argv[])
 	for (long i = 0; i < nTotalElements; i++){
 	        r = rand();  // Returns a pseudo-random integer
 	                     //    between 0 and RAND_MAX.
-		// InputVector[i] = (r % 1000) - 500;
-		InputVector[i] = 1; // i + 1;
+		InputVector[i] = (r % 1000) - 500;
+		// InputVector[i] = 1; // i + 1;
 	}
 
 	printf("\n\nwill use %d threads to calculate prefix-sum of %d total elements\n", 
