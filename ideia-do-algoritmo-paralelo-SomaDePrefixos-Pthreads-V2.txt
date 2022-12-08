@@ -76,7 +76,7 @@ A thread 2 faz:
   - calcula myPartialSum = 6+3
   - armazena no vetor global assim: PartialSum[2] = myPartialSum;
 O vetor global PartialSum fica:
-PartialSum: [ 11  5 10 ]  
+PartialSum: [ 11  5  9 ]  
   
 Após a barreira cada thread faz:
 a) calcula a soma do seu prefixo lendo o vetor global PartialSum

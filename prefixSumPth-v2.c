@@ -20,8 +20,9 @@
 
 #include "chrono.c"
 
-//#define DEBUG 2
-#define DEBUG 0
+// #define DEBUG 2
+// #define DEBUG 1
+// #define DEBUG 0
 
 #define MAX_THREADS 64
 
@@ -80,36 +81,25 @@ void *prefixPartialSum(void *ptr)
     #if DEBUG == 1
       printf("thread %d here! first=%d last=%d\n\n", myIndex, first, last );
     #endif
-    
-    if( myIndex != 0 )
-        pthread_barrier_wait(&myBarrier);  
         
     // work with my chunck
     int myPartialSum = 0;
     for( int i=first; i<=last ; i++ )
         myPartialSum += InputVector[i];
-    
-    OutputVector[first] = InputVector[first];
-    for( int i=first; i<last ; i++ )
-        OutputVector[i+1] = InputVector[i+1] + OutputVector[i];
-        
-    // store my result 
-    maximosPorThread[ myIndex ] = myPartialSum;   
-    
-    pthread_barrier_wait(&myBarrier);    
 
-    if(myIndex == 0)
-        for(int i = 1; i < nThreads; i++)
-            maximosPorThread[i] += maximosPorThread[i-1]; 
-    
-    pthread_barrier_wait(&myBarrier); 
+	partialSum[myIndex] = myPartialSum;
 
-    if(myIndex != 0){
-        for(int i = first; i <= last; i++)
-            OutputVector[i] += maximosPorThread[myIndex-1];
-    }
+	pthread_barrier_wait(&myBarrier); 
 
-    pthread_barrier_wait(&myBarrier); 
+	int myPrefixSum = 0;
+
+	for(int i = 0; i < myIndex; i++){
+		myPrefixSum += partialSum[i];
+	}
+
+
+    for( int i=first; i<=last ; i++ )
+        OutputVector[i] = InputVector[i] + myPrefixSum;
 
     return NULL;
 }
@@ -158,19 +148,18 @@ void ParallelPrefixSumPth( const TYPE *InputVec,
    	///////////////// INCLUIR AQUI SEU CODIGO da V2 /////////
    
    	// criar as threads aqui!
-   	my_thread_id[0] = 0;
-    for (i=1; i < nThreads; i++) {
+    for (int i=0; i < nThreads; i++) {
       my_thread_id[i] = i;
       pthread_create( &Thread[i], NULL, 
                       prefixPartialSum, &my_thread_id[i]);
     }
    
    	// voce pode criar outras funcoes para as suas threads
-   
-   	// fazer join das threads aqui!
-   	for (i=0; i < nThreads; i++)
-        pthread_join(Thread[i], NULL);
 
+   	// fazer join das threads aqui!
+   	for (int i=0; i < nThreads; i++)
+        pthread_join(Thread[i], NULL);
+	
    	//////////////////////////////////////////////////////////
    
     pthread_barrier_destroy(&myBarrier);
@@ -265,8 +254,8 @@ int main(int argc, char *argv[])
 	for (long i = 0; i < nTotalElements; i++){
 	        r = rand();  // Returns a pseudo-random integer
 	                     //    between 0 and RAND_MAX.
-		InputVector[i] = (r % 1000) - 500;
-		//InputVector[i] = 1; // i + 1;
+		// InputVector[i] = (r % 1000) - 500;
+		InputVector[i] = 1; // i + 1;
 	}
 
 	printf("\n\nwill use %d threads to calculate prefix-sum of %d total elements\n", 
