@@ -82,7 +82,7 @@ Após a barreira cada thread faz:
 a) calcula a soma do seu prefixo lendo o vetor global PartialSum
    e calculando seu "prefixo" na variável local myPrefixSum
 b) produz a soma de prefixos correta na usa faixa,
-   lendo lendo a faixa do vetor de entrada e escrevendo no vetor
+   lendo a faixa do vetor de entrada e escrevendo no vetor
    de saída, e usando o seu valor calculado em na soma myPrefixSum
 
 Assim temos:
