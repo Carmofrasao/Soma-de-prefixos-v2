@@ -153,16 +153,19 @@ void ParallelPrefixSumPth( const TYPE *InputVec,
    	///////////////// INCLUIR AQUI SEU CODIGO da V2 /////////
    
    	// criar as threads aqui!
-    for (int i=0; i < nThreads; i++) {
+	my_thread_id[0] = 0;
+    for (int i=1; i < nThreads; i++) {
       my_thread_id[i] = i;
       pthread_create( &Thread[i], NULL, 
                       prefixPartialSum, &my_thread_id[i]);
     }
    
+	prefixPartialSum(&my_thread_id[0]);
+
    	// voce pode criar outras funcoes para as suas threads
 
    	// fazer join das threads aqui!
-   	for (int i=0; i < nThreads; i++)
+   	for (int i=1; i < nThreads; i++)
         pthread_join(Thread[i], NULL);
 	
    	//////////////////////////////////////////////////////////
